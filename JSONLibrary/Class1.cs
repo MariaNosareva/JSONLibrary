@@ -13,12 +13,18 @@ namespace JSONLibrary {
                     break;
                 case "ArrayList":
                     valueResult.Append("[");
+                    bool notEmpty = false;
                     foreach (var element in (ArrayList) value) {
                         valueResult = element.valueToString(valueResult);
                         valueResult.Append(", ");
+                        notEmpty = true;
                     }
 
-                    valueResult.Remove(valueResult.Length - 2, 2).Append("]");
+                    if (notEmpty) {
+                        valueResult.Remove(valueResult.Length - 2, 2);
+                    }
+
+                    valueResult.Append("]");
                     break;
                 case "Int32":
                     valueResult.Append(value);
@@ -32,6 +38,9 @@ namespace JSONLibrary {
                 case "Boolean":
                     valueResult.Append(value.ToString().ToLower());
                     break;
+                default:
+                    valueResult.Append(value.ToJson());
+                    break;
             }
 
             return valueResult;
@@ -41,7 +50,8 @@ namespace JSONLibrary {
 
             var jsonBuilder = new StringBuilder("{");
             var type = obj.GetType();
-            
+
+            bool notEmpty = false;
             foreach (var property in type.GetProperties()) {
                 jsonBuilder.Append("\"" + property.Name + "\":");
 
@@ -56,9 +66,14 @@ namespace JSONLibrary {
                 
                 jsonBuilder.Append(valueResult);
                 jsonBuilder.Append(", ");
+                notEmpty = true;
+            }
+
+            if (notEmpty) {
+                jsonBuilder.Remove(jsonBuilder.Length - 2, 2);
             }
             
-            var str = jsonBuilder.Remove(jsonBuilder.Length-2, 2).Append("}").ToString();
+            var str = jsonBuilder.Append("}").ToString();
             return str;
         }
 
