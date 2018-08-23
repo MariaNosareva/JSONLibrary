@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.IO;
 using System.Reflection;
 using System.Text;
 
@@ -46,6 +47,7 @@ namespace JSONLibrary {
             return valueResult;
         }
 
+        
         public static String ToJson(this Object obj) {
 
             var jsonBuilder = new StringBuilder("{");
@@ -77,7 +79,14 @@ namespace JSONLibrary {
             return str;
         }
 
-        public static void ToJsonFile(this Object obj, string fileName) { }
+
+        public static void ToJsonFile(this Object obj, string fileName) {
+            String result = obj.ToJson();
+            using (var textWriter = new StreamWriter(File.Open(fileName, FileMode.Append))) {
+                textWriter.WriteLine(result);
+                textWriter.Flush();
+            }
+        }
     }
 
     public static class StringTransform {
