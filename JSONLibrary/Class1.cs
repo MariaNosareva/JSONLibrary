@@ -28,11 +28,7 @@ namespace JSONLibrary {
                     valueResult.Append("]");
                     break;
                 case "Int32":
-                    valueResult.Append(value);
-                    break;
                 case "Single":
-                    valueResult.Append(value);
-                    break;
                 case "Double":
                     valueResult.Append(value);
                     break;
@@ -90,6 +86,8 @@ namespace JSONLibrary {
     }
 
     public static class StringTransform {
+
+
         public static T FromJson<T>(this String str) where T: new() {
             return new T();
         }
