@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -89,7 +90,21 @@ namespace JSONLibrary {
 
 
         public static T FromJson<T>(this String str) where T: new() {
-            return new T();
+//            var map = (Dictionary<string, object>)JsonParser.Parse(str);
+//            foreach (var key in map.Keys) {
+//                Console.WriteLine(key);
+//            }            
+            return (T)JsonToObject.Convert(JsonParser.Parse(str), typeof(T));
+        }
+
+        
+    }
+
+    internal class JsonToObject {
+        
+        public static object Convert(object obj, Type type) {
+            // TODO
+            return null;
         }
     }
 }

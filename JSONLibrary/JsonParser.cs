@@ -1,6 +1,6 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Diagnostics;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -29,7 +29,7 @@ namespace JSONLibrary {
         private StringReader json;
 
         public JsonParser(string json) {
-            this.json = new StringReader(string.Concat(json.Where(c => !char.IsWhiteSpace(c))));
+            this.json = new StringReader(json);//;
         }
 
         public static object Parse(string json) {
@@ -42,11 +42,24 @@ namespace JSONLibrary {
             return ParseValue(getNextToken());
         }
         
+        void EatWhitespace() {
+            while (Char.IsWhiteSpace(Convert.ToChar(json.Peek()))) {
+                json.Read();
+
+                if (json.Peek() == -1) {
+                    break;
+                }
+            }
+        }
+        
         private TOKEN getNextToken() {
+            
+            EatWhitespace();
+            
             if (json.Peek() == -1) {
                 return TOKEN.None;
             }
-
+            
             switch (Convert.ToChar(json.Peek())) {
                 case '{':
                     return TOKEN.OpenBrace;
@@ -61,7 +74,7 @@ namespace JSONLibrary {
                 case ',':
                     json.Read();
                     return TOKEN.Comma;
-                case '"':
+                case '\"':
                     return TOKEN.String;
                 case ':':
                     return TOKEN.Colon;
@@ -94,10 +107,10 @@ namespace JSONLibrary {
         
         private string getNextWord() {
             StringBuilder builder = new StringBuilder();
-            while (serviceCharacters.IndexOf(Convert.ToChar(json.Peek())) != -1 && json.Peek() != -1) {
+            while (serviceCharacters.IndexOf(Convert.ToChar(json.Peek())) == -1 && json.Peek() != -1) {
                 builder.Append(Convert.ToChar(json.Read()));
             }
-
+            
             return builder.ToString();
         }
         
@@ -122,26 +135,59 @@ namespace JSONLibrary {
             }
         }
 
-        private object ParseObject() {
-            // TODO
-            return null;
+        private Dictionary<string, object> ParseObject() {
+            json.Read();
+            Dictionary<string, object> map = new Dictionary<string, object>();
+
+            while (json.Peek() != -1) {
+                switch (getNextToken()) {
+                    case TOKEN.CloseBrace:
+                        return map;
+                    case TOKEN.Comma:
+                        continue;
+                    default:
+                        string key = ParseString();
+                        if (key == null || getNextToken() != TOKEN.Colon) {
+                            throw new ArgumentException("incorrect object");
+                        }
+
+                        json.Read();
+                        map.Add(key, InitParse());
+                        break;
+                }
+            }
+            throw new ArgumentException("incorrect object");
         }
 
-        private object ParseArray() {
-            // TODO
-            return null;
+        private ArrayList ParseArray() {
+            json.Read();
+            ArrayList array = new ArrayList();
+
+            while (json.Peek() != -1) {
+                switch (getNextToken()) {
+                    case TOKEN.Comma:
+                        continue;
+                    case TOKEN.CloseBracket:
+                        return array;
+                    default:
+                        object element = ParseValue(getNextToken());
+                        array.Add(element);
+                        break;
+                }
+            }
+
+            throw new ArgumentException("incorrect array");
         }
 
         private string ParseString() {
             json.Read();
             StringBuilder builder = new StringBuilder();
 
-            bool stringIsGoing = true;
             while (json.Peek() != -1) {
-                
                 char nextChar = Convert.ToChar(json.Read());
+
                 switch (nextChar) {
-                    case '"': // '\"'
+                    case '\"': // '\"'
                         return builder.ToString(); // end of string
                     case '\\':
                         
