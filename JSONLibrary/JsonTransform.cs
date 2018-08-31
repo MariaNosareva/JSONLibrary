@@ -123,13 +123,17 @@ namespace JSONLibrary {
                     case "Double":
                     case "String":
                     case "Int32":
+                        // TODO null expression fuck up
                         propertyInfo.SetValue(destination, map[name], null);
                         break;
                     default:
                         
                         if (map[name].GetType() == typeof(Dictionary<string, object>)) {
-                           // propertyInfo.SetValue(destination, DeserialiseMap((Dictionary<string, object>)map[name], propertyInfo.GetType(), destination.));
+                            propertyInfo.SetValue(destination, DeserialiseMap((Dictionary<string, object>)map[name], propertyInfo.PropertyType, propertyInfo.GetValue(destination, null)), null);
+                        } else {
+                            throw new InvalidExpressionException("property type doesn't correlate with map value type");      
                         }
+
                         break;
                 }
             }
