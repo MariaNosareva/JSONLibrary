@@ -1,6 +1,8 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -29,6 +31,7 @@ namespace JSONLibrary {
                     valueResult.Append("]");
                     break;
                 case "Int32":
+                case "Int64":
                 case "Single":
                 case "Double":
                     valueResult.Append(value);
@@ -90,11 +93,11 @@ namespace JSONLibrary {
 
 
         public static T FromJson<T>(this String str) where T: new() {
-//            var map = (Dictionary<string, object>)JsonParser.Parse(str);
+            var map = (Dictionary<string, object>)JsonParser.Parse(str);
 //            foreach (var key in map.Keys) {
 //                Console.WriteLine(key);
 //            }            
-            return (T)JsonToObject.Convert(JsonParser.Parse(str), typeof(T));
+            return (T)(new JsonToObject()).DeserialiseMap(map, typeof(T), new T());
         }
 
         
@@ -102,9 +105,36 @@ namespace JSONLibrary {
 
     internal class JsonToObject {
         
-        public static object Convert(object obj, Type type) {
-            // TODO
-            return null;
+        public object DeserialiseMap(Dictionary<string, object> map, Type type, object destination) {
+            
+            if (type == typeof(Object) || type == typeof(Dictionary<string, object>)) {
+                return map;
+            }
+
+            foreach (var propertyInfo in type.GetProperties()) {
+                String name = propertyInfo.Name;
+                if (!map.ContainsKey(name)) {
+                    throw new InvalidExpressionException("no such field in object");
+                }
+                switch (propertyInfo.PropertyType.Name) {
+                    case "Single":
+                    case "Boolean":
+                    case "ArrayList":
+                    case "Double":
+                    case "String":
+                    case "Int32":
+                        propertyInfo.SetValue(destination, map[name], null);
+                        break;
+                    default:
+                        
+                        if (map[name].GetType() == typeof(Dictionary<string, object>)) {
+                           // propertyInfo.SetValue(destination, DeserialiseMap((Dictionary<string, object>)map[name], propertyInfo.GetType(), destination.));
+                        }
+                        break;
+                }
+            }
+            
+            return destination;
         }
     }
 }
