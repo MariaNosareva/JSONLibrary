@@ -168,7 +168,6 @@ namespace JSONLibrary {
                 TOKEN token = getNextToken();
                 switch (token) {
                     case TOKEN.Comma:
-                        json.Read();
                         continue;
                     case TOKEN.CloseBracket:
                         foreach (var elem in array) {
