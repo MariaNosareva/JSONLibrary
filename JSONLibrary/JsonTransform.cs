@@ -1,13 +1,13 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
-using System.Reflection;
+using System.Linq;
 using System.Text;
 
 namespace JSONLibrary {
+    
     public static class ObjectTransform {
 
         public static StringBuilder valueToString(this Object value, StringBuilder valueResult) {
@@ -52,11 +52,16 @@ namespace JSONLibrary {
 
             var jsonBuilder = new StringBuilder("{");
             var type = obj.GetType();
-
+            
             bool notEmpty = false;
             foreach (var property in type.GetProperties()) {
-                jsonBuilder.Append("\"" + property.Name + "\":");
 
+                var attributes = property.GetCustomAttributes(false);
+                if (attributes.Count(c => c.GetType() == typeof(JsonIgnoreAttribute)) > 0) {
+                    continue;
+                }
+                jsonBuilder.Append("\"" + property.Name + "\":");
+                
                 var value = property.GetValue(obj, new object[] { });
                 var valueResult = new StringBuilder();
                 if (value == null) {
@@ -93,14 +98,9 @@ namespace JSONLibrary {
 
 
         public static T FromJson<T>(this String str) where T: new() {
-            var map = (Dictionary<string, object>)JsonParser.Parse(str);
-//            foreach (var key in map.Keys) {
-//                Console.WriteLine(key);
-//            }            
+            var map = (Dictionary<string, object>)JsonParser.Parse(str);   
             return (T)(new JsonToObject()).DeserialiseMap(map, typeof(T), new T());
         }
-
-        
     }
 
     internal class JsonToObject {
@@ -114,7 +114,12 @@ namespace JSONLibrary {
             foreach (var propertyInfo in type.GetProperties()) {
                 String name = propertyInfo.Name;
                 if (!map.ContainsKey(name)) {
-                    throw new InvalidExpressionException("no such field in object");
+                    continue;
+                }
+
+                if (map[name] == null) {
+                    propertyInfo.SetValue(destination, null, null);
+                    continue;
                 }
                 switch (propertyInfo.PropertyType.Name) {
                     case "Single":
@@ -123,13 +128,17 @@ namespace JSONLibrary {
                     case "Double":
                     case "String":
                     case "Int32":
-                        // TODO null expression fuck up
+                    // another types wip
                         propertyInfo.SetValue(destination, map[name], null);
                         break;
                     default:
                         
                         if (map[name].GetType() == typeof(Dictionary<string, object>)) {
-                            propertyInfo.SetValue(destination, DeserialiseMap((Dictionary<string, object>)map[name], propertyInfo.PropertyType, propertyInfo.GetValue(destination, null)), null);
+                            object newDest = propertyInfo.GetValue(destination, null);
+                            if (newDest == null) {
+                                newDest = Activator.CreateInstance(propertyInfo.PropertyType);
+                            }
+                            propertyInfo.SetValue(destination, DeserialiseMap((Dictionary<string, object>)map[name], propertyInfo.PropertyType, newDest), null);
                         } else {
                             throw new InvalidExpressionException("property type doesn't correlate with map value type");      
                         }

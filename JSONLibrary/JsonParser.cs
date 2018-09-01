@@ -73,7 +73,6 @@ namespace JSONLibrary {
                     return TOKEN.CloseBracket;
                 case ',':
                     json.Read();
-                    Console.WriteLine("hello comma");
                     return TOKEN.Comma;
                 case '\"':
                     return TOKEN.String;
@@ -95,7 +94,6 @@ namespace JSONLibrary {
 
             switch (getNextWord()) {
                 case "true":
-                    Console.WriteLine("token true");
                     return TOKEN.True;
                 case "false":
                     return TOKEN.False;
@@ -111,7 +109,6 @@ namespace JSONLibrary {
             while (serviceCharacters.IndexOf(Convert.ToChar(json.Peek())) == -1 && json.Peek() != -1) {
                 builder.Append(Convert.ToChar(json.Read()));
             }
-            Console.WriteLine(builder.ToString());
             return builder.ToString();
         }
         
@@ -170,9 +167,6 @@ namespace JSONLibrary {
                     case TOKEN.Comma:
                         continue;
                     case TOKEN.CloseBracket:
-                        foreach (var elem in array) {
-                            Console.WriteLine("ARRAY " + elem);
-                        }
                         return array;
                     default:
                         object element = ParseValue(token);
