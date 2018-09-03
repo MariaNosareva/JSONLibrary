@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace JSONLibrary {
     
     public static class ObjectTransform {
 
-        public static StringBuilder valueToString(this Object value, StringBuilder valueResult) {
+        public static StringBuilder valueToString(this object value, StringBuilder valueResult) {
             switch (value.GetType().Name) {
                 case "String":
                     valueResult.Append("\"" + value + "\"");
@@ -32,9 +33,11 @@ namespace JSONLibrary {
                     break;
                 case "Int32":
                 case "Int64":
+                    valueResult.Append(value);
+                    break;
                 case "Single":
                 case "Double":
-                    valueResult.Append(value);
+                    valueResult.Append(((double)value).ToString(CultureInfo.InvariantCulture));
                     break;
                 case "Boolean":
                     valueResult.Append(value.ToString().ToLower());
@@ -48,7 +51,7 @@ namespace JSONLibrary {
         }
 
         
-        public static String ToJson(this Object obj) {
+        public static string ToJson(this object obj) {
 
             var jsonBuilder = new StringBuilder("{");
             var type = obj.GetType();
@@ -57,7 +60,7 @@ namespace JSONLibrary {
             foreach (var property in type.GetProperties()) {
 
                 var attributes = property.GetCustomAttributes(false);
-                if (attributes.Count(c => c.GetType() == typeof(JsonIgnoreAttribute)) > 0) {
+                if (attributes.Any(c => c.GetType() == typeof(JsonIgnoreAttribute))) {
                     continue;
                 }
                 jsonBuilder.Append("\"" + property.Name + "\":");
@@ -85,8 +88,8 @@ namespace JSONLibrary {
         }
 
 
-        public static void ToJsonFile(this Object obj, string fileName) {
-            String result = obj.ToJson();
+        public static void ToJsonFile(this object obj, string fileName) {
+            string result = obj.ToJson();
             using (var textWriter = new StreamWriter(File.Open(fileName, FileMode.Append))) {
                 textWriter.WriteLine(result);
                 textWriter.Flush();
@@ -96,8 +99,7 @@ namespace JSONLibrary {
 
     public static class StringTransform {
 
-
-        public static T FromJson<T>(this String str) where T: new() {
+        public static T FromJson<T>(this string str) where T: new() {
             var map = (Dictionary<string, object>)JsonParser.Parse(str);   
             return (T)(new JsonToObject()).DeserialiseMap(map, typeof(T), new T());
         }
@@ -107,12 +109,12 @@ namespace JSONLibrary {
         
         public object DeserialiseMap(Dictionary<string, object> map, Type type, object destination) {
             
-            if (type == typeof(Object) || type == typeof(Dictionary<string, object>)) {
+            if (type == typeof(object) || type == typeof(Dictionary<string, object>)) {
                 return map;
             }
 
             foreach (var propertyInfo in type.GetProperties()) {
-                String name = propertyInfo.Name;
+                string name = propertyInfo.Name;
                 if (!map.ContainsKey(name)) {
                     continue;
                 }
