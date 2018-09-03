@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -43,7 +44,7 @@ namespace JSONLibrary {
         }
         
         void EatWhitespace() {
-            while (Char.IsWhiteSpace(Convert.ToChar(json.Peek()))) {
+            while (Char.IsWhiteSpace((char)json.Peek())) {
                 json.Read();
 
                 if (json.Peek() == -1) {
@@ -60,7 +61,7 @@ namespace JSONLibrary {
                 return TOKEN.None;
             }
             
-            switch (Convert.ToChar(json.Peek())) {
+            switch ((char)json.Peek()) {
                 case '{':
                     return TOKEN.OpenBrace;
                 case '}':
@@ -106,8 +107,8 @@ namespace JSONLibrary {
         
         private string getNextWord() {
             StringBuilder builder = new StringBuilder();
-            while (serviceCharacters.IndexOf(Convert.ToChar(json.Peek())) == -1 && json.Peek() != -1) {
-                builder.Append(Convert.ToChar(json.Read()));
+            while (serviceCharacters.IndexOf((char)json.Peek()) == -1 && json.Peek() != -1) {
+                builder.Append((char)json.Read());
             }
             return builder.ToString();
         }
@@ -183,14 +184,14 @@ namespace JSONLibrary {
             StringBuilder builder = new StringBuilder();
 
             while (json.Peek() != -1) {
-                char nextChar = Convert.ToChar(json.Read());
+                char nextChar = (char)json.Read();
 
                 switch (nextChar) {
                     case '\"': // '\"'
                         return builder.ToString(); // end of string
                     case '\\':
                         
-                        char additional = Convert.ToChar(json.Read());
+                        char additional = (char)json.Read();
                         switch (additional) {
                             case 'n':
                                 builder.Append("\n");
@@ -230,9 +231,9 @@ namespace JSONLibrary {
         private object ParseNumber() {
             string supposedNumber = getNextWord();
             if (supposedNumber.Contains('.')) {
-                return Double.Parse(supposedNumber);
+                return Double.Parse(supposedNumber, CultureInfo.InvariantCulture);
             }
-            return Int64.Parse(supposedNumber);
+            return Int64.Parse(supposedNumber, CultureInfo.InvariantCulture);
         }
 
         public void Dispose() {
